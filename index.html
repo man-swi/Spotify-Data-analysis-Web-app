@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background: #040306;
+        }
+
+        #dashboard-container {
+            display: flex;
+            width: 100%;
+        }
+
+        #filter-container {
+            width: 30%;
+            height: 100vh;
+            overflow-y: auto;
+            background: #040306;
+            color: #fff;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            animation: fadeIn 0.8s forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #song-info-container,
+        #analyze-container {
+            width: 100%;
+            background: #282828;
+            font-size: medium;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            margin-left: 20px;
+        }
+
+        #reset-btn {
+            margin-bottom: 10px;
+            background-color: #1db954;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            width: 100%;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        #reset-btn:hover {
+            background-color: #25b960;
+        }
+
+        h2 {
+            color: #fff;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #b3b3b3;
+        }
+
+        select,
+        input {
+            width: calc(100% - 16px);
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #535353;
+            border-radius: 5px;
+            background-color: #040306;
+            color: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #1db954;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #25b960;
+        }
+
+        .result-container {
+            margin-top: 20px;
+        }
+
+        .result-container p {
+            margin: 5px 0;
+            color: #fff;
+        }
+
+        #result-message {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: large;
+        }
+
+        #song-info-container h2 {
+            color: #1db954;
+        }
+
+        #song-info-container p {
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+        }
+
+        #song-info-container p span {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        #song-info-container p:hover {
+            transform: scale(1.05);
+        }
+
+        #barPlotContainer {
+            width: 100%;
+            max-width: 100px; /* Adjust the max-width as needed */
+            margin: 0 auto; /* Center the container */
+            max-height: 20%;
+        }
+
+        #analyze-container {
+            text-align: center;
+        }
+
+        #barPlot {
+            width: 100%;
+            max-height: 45%; /* Adjust the height as needed */
+        }
+
+        #discPlot {
+            max-width: 45%;
+            max-height: 45%;
+            margin: 0 auto;
+        }
+
+
+        #song-info-container {
+            /* ... Existing styles ... */
+            text-align: center; /* Center the content horizontally */
+        }
+
+        #cover-image {
+            width: 250px; /* Adjust the width as needed */
+            height: 250px; /* Adjust the height as needed */
+            border-radius: 50%; /* Make it circular */
+            object-fit: cover; /* Ensure the image covers the entire container */
+            display: inline-block; /* Align the image as inline-block for centering */
+        }
+
+
+        @media only screen and (max-width: 1200px) {
+            #filter-container {
+                width: 40%;
+            }
+
+            #song-info-container,
+            #analyze-container {
+                width: 55%;
+            }
+        }
+
+        @media only screen and (max-width: 800px) {
+            #filter-container {
+                width: 100%;
+            }
+
+            #song-info-container,
+            #analyze-container {
+                width: 100%;
+                margin-left: 0;
+            }
+        }
+    </style>
+    
+</head>
+<body>
+    <div id="filter-container">
+        <h2>Filter Options</h2>
+        <label for="period-filter">Period:</label>
+        <select id="period-filter"></select>
+
+        <label for="tracks-filter">Tracks:</label>
+        <select id="tracks-filter"></select>
+
+        <label for="artists-filter">Artists:</label>
+        <select id="artists-filter"></select>
+
+        <input type="text" id="search-box" placeholder="Search...">
+        <button id="reset-btn">Reset Filters</button>
+    </div>
+
+    <div id="song-info-container">
+        <h2>Song Information</h2>
+        <img id="cover-image" alt="Cover Image">
+        <p>ARTIST NAME: <span id="artist-name"></span></p>
+        <p>TRACK NAME: <span id="track-name"></span></p>
+        <p>RELEASE YEAR: <span id="release-date"></span></p>
+        <p>MODE: <span id="mode"></span></p>
+        <p>BPM: <span id="bpm"></span></p>
+        <p>DANCEABILITY %: <span id="danceability"></span></p>
+        <p>VALENCE %: <span id="valence"></span></p>
+        <p>ACOUSTICNESS %: <span id="acousticness"></span></p>
+        <p>LIVENESS %: <span id="liveness"></span></p>
+        <p>SPEECHINESS %: <span id="speechiness"></span></p>
+        <p id="result-message"></p>
+    </div>
+
+    <div id="analyze-container">
+        <h2>Songs Analysis</h2>
+        <canvas id="barPlot"></canvas>
+        <canvas id="discPlot"></canvas>
+    </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <script>
+document.addEventListener('DOMContentLoaded', function () {
+    fetch('/get_filters', {
+        method: 'POST',
+    })
+    .then(response => response.json())
+    .then(data => {
+        populateFilterOptions(data);
+        initChartJs();
+    });
+
+    document.getElementById('period-filter').addEventListener('change', updateResults);
+    document.getElementById('tracks-filter').addEventListener('change', updateResults);
+    document.getElementById('artists-filter').addEventListener('change', updateResults);
+    document.getElementById('search-box').addEventListener('input', updateResults);
+
+    document.getElementById('reset-btn').addEventListener('click', resetFilters);
+
+    function populateFilterOptions(data) {
+        populateSelect('period-filter', data.years);
+        populateSelect('tracks-filter', data.songs);
+        populateSelect('artists-filter', data.artists);
+    }
+
+    function populateSelect(selectId, options) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '';
+
+        // Sort the options in descending order if the selectId is 'period-filter'
+        if (selectId === 'period-filter') {
+            options.sort((a, b) => parseInt(b) - parseInt(a));
+        }
+
+        options.forEach(option => {
+            const optionElem = document.createElement('option');
+            optionElem.value = option;
+            optionElem.textContent = option;
+            select.appendChild(optionElem);
+        });
+    }
+
+
+    function updateResults() {
+    const chosenFilter = getChosenFilter();
+    const chosenValue = getChosenValue();
+
+    // Fetch results based on the chosen filter
+    fetch('/get_results', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ chosen_filter: chosenFilter, chosen_value: chosenValue }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Check if there is any matching data
+        const hasMatchingData = data.results.length > 0;
+
+        // Display results in the song information container
+        displayResults(data.results, hasMatchingData);
+
+        // Create or update the disc plot for the selected song
+        fetch('/get_energy_plot', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ chosen_value: hasMatchingData ? data.results[0].Songs : '' }),
+        })
+        .then(response => response.json())
+        .then(energyPlotData => {
+            console.log('Energy Plot Data:', energyPlotData);
+            createOrUpdateDiscPlot(energyPlotData);
+
+            // Fetch top 10 songs and streams for the selected release year
+            fetch('/get_top_years_streams', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ chosen_filter: 'Released_year', chosen_value: data.results[0].Released_year }),
+            })
+            .then(response => response.json())
+            .then(topSongsStreamsData => {
+                console.log('Top Songs Streams Data:', topSongsStreamsData);
+                createOrUpdateBarPlot(topSongsStreamsData);
+            });
+        });
+    });
+}
+
+
+
+function createOrUpdateBarPlot(data) {
+    const topSongs = data.top_songs_streams.map(item => item.song);
+    const streamsValues = data.top_songs_streams.map(item => item.streams);
+
+    // Check if the bar plot canvas exists
+    const barPlotCanvas = document.getElementById('barPlot');
+    if (!barPlotCanvas) {
+        console.error('Error: Canvas element with id "barPlot" not found.');
+        return;
+    }
+
+    // Clear existing chart instance
+    Chart.getChart(barPlotCanvas)?.destroy();
+
+    // Create a new bar plot
+    const ctx = barPlotCanvas.getContext('2d');
+    const myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topSongs,
+            datasets: [{
+                label: 'Streams',
+                data: streamsValues,
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+        },
+    });
+}
+
+
+
+function createOrUpdateDiscPlot(data) {
+    const releasedYears = data.released_years;
+    const energyValues = data.energy_values;
+
+    // Check if the disc plot canvas exists
+    const discPlotCanvas = document.getElementById('discPlot');
+    if (!discPlotCanvas) {
+        console.error('Error: Canvas element with id "discPlot" not found.');
+        return;
+    }
+
+    // Clear existing chart instance
+    Chart.getChart(discPlotCanvas)?.destroy();
+
+    // Create a new disc plot
+    const ctx = discPlotCanvas.getContext('2d');
+    const myDiscChart = new Chart(ctx, {
+        type: 'polarArea',
+        data: {
+            labels: releasedYears,
+            datasets: [{
+                label: 'Energy',
+                data: energyValues,
+                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+        },
+    });
+}
+
+
+                
+
+                
+
+    
+function displayResults(results) {
+    // Check if there is any matching data
+    const hasMatchingData = results.length > 0;
+
+    // Display cover image in circular format
+    const coverUrl = hasMatchingData ? results[0].Cover_url : '';
+    const coverImage = document.getElementById('cover-image');
+    coverImage.src = coverUrl;
+
+    // Display results in the song information container
+    if (hasMatchingData) {
+        const result = results[0]; // Take the first result for simplicity
+        document.getElementById('artist-name').textContent = result.Artist_name || '';
+        document.getElementById('track-name').textContent = result.Songs || '';
+        document.getElementById('release-date').textContent = result.Released_year || '';
+        document.getElementById('mode').textContent = result.Mode || '';
+        document.getElementById('bpm').textContent = result.BPM || '';
+        document.getElementById('danceability').textContent = result.Danceability || '';
+        document.getElementById('valence').textContent = result.Valence || '';
+        document.getElementById('acousticness').textContent = result.Acousticness || '';
+        document.getElementById('liveness').textContent = result.Liveness || '';
+        document.getElementById('speechiness').textContent = result.Speechiness || '';
+    } else {
+        // Clear results if there are no matching records
+        document.getElementById('artist-name').textContent = '';
+        document.getElementById('track-name').textContent = '';
+        document.getElementById('release-date').textContent = '';
+        document.getElementById('mode').textContent = '';
+        document.getElementById('bpm').textContent = '';
+        document.getElementById('danceability').textContent = '';
+        document.getElementById('valence').textContent = '';
+        document.getElementById('acousticness').textContent = '';
+        document.getElementById('liveness').textContent = '';
+        document.getElementById('speechiness').textContent = '';
+    }
+
+        // Display a message if there is no matching data
+    document.getElementById('result-message').textContent = hasMatchingData
+        ? ''
+        : 'Sorry, the selected data is not present in the Database! Try some other';
+
+    // Create or update the bar plot
+    fetch('/get_top_years_streams', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ chosen_filter: 'Songs', chosen_value: results[0].Songs }),
+    })
+    .then(response => response.json())
+    .then(topYearsStreamsData => {
+        console.log('Top Years Streams Data:', topYearsStreamsData);
+        createOrUpdateBarPlot(topYearsStreamsData);
+    });
+}
+
+    
+                
+    
+        function resetFilters() {
+            document.getElementById('period-filter').value = '';
+            document.getElementById('tracks-filter').value = '';
+            document.getElementById('artists-filter').value = '';
+            document.getElementById('search-box').value = '';
+            updateResults();
+        }
+        function getChosenFilter() {
+            if (document.getElementById('period-filter').value !== '') {
+                return 'Period';
+            } else if (document.getElementById('tracks-filter').value !== '') {
+                return 'Tracks';
+            } else if (document.getElementById('artists-filter').value !== '') {
+                return 'Artists';
+            } else {
+                return '';
+            }
+        }
+        function getChosenValue() {
+            const chosenFilter = getChosenFilter();
+            if (chosenFilter === 'Period') {
+                return document.getElementById('period-filter').value;
+            } else if (chosenFilter === 'Tracks') {
+                return document.getElementById('tracks-filter').value;
+            } else if (chosenFilter === 'Artists') {
+                return document.getElementById('artists-filter').value;
+            } else {
+                return '';
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
